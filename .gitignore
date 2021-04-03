@@ -4,4 +4,5 @@ env
 bashplotlib.egg-info
 build
 dist
+scratch.py
 

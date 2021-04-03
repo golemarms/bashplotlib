@@ -28,17 +28,32 @@ def get_scale(series, is_y=False, steps=20):
     return scaled_series
 
 
-def _plot_scatter(xs, ys, size, pch, colour, title, cs):
+def _plot_scatter(xs, ys, size, pch, colour, title, cs, xtitle, ytitle):
     plotted = set()
+    x_scale = get_scale(xs, False, size)
+    y_scale = get_scale(ys, True, size)
+    scaled_length_x = len(x_scale)
 
     if title:
-        print(box_text(title, 2 * (len(get_scale(xs, False, size)) + 1)))
+        print(box_text(title, 2 * (scaled_length_x + 1)))
 
-    print("+" + "-" * (2 * (len(get_scale(xs, False, size)) + 1)) + "+")
-    for y in get_scale(ys, True, size):
+    if ytitle:
+        print(f"y: {ytitle}")
+
+    print("+" + "-" * (2 * (scaled_length_x + 1)) + "+")
+    yaxis = min(x_scale, key=abs) if min(x_scale) < 0 < max(x_scale) else None
+    xaxis = min(y_scale, key=abs) if min(y_scale) < 0 < max(y_scale) else None
+    for y in y_scale:
         print("|", end=' ')
-        for x in get_scale(xs, False, size):
-            point = " "
+        for x in x_scale:
+            if x == xaxis and y == xaxis:
+                point = "o"
+            elif x == yaxis:
+                point = "|"
+            elif y == xaxis:
+                point = "–"
+            else:
+                point = " "
             for (i, (xp, yp)) in enumerate(zip(xs, ys)):
                 if xp <= x and yp >= y and (xp, yp) not in plotted:
                     point = pch
@@ -47,9 +62,12 @@ def _plot_scatter(xs, ys, size, pch, colour, title, cs):
                         colour = cs[i]
             printcolour(point + " ", True, colour)
         print(" |")
-    print("+" + "-" * (2 * (len(get_scale(xs, False, size)) + 1)) + "+")
+    print("+" + "-" * (2 * (scaled_length_x + 1)) + "+")
 
-def plot_scatter(f, xs, ys, size, pch, colour, title):
+    if xtitle:
+        print("{0:>{1}}".format(f"x: {xtitle}", 2 * (scaled_length_x + 2)))
+
+def plot_scatter(f, xs, ys, size, pch, colour, title, xtitle="", ytitle=""):
     """
     Form a complex number.
 
@@ -81,7 +99,7 @@ def plot_scatter(f, xs, ys, size, pch, colour, title):
         with open(ys) as fh:
             ys = [float(str(row).strip()) for row in fh]
 
-    _plot_scatter(xs, ys, size, pch, colour, title, cs)
+    _plot_scatter(xs, ys, size, pch, colour, title, cs, xtitle, ytitle)
     
 
 
@@ -91,6 +109,8 @@ def main():
 
     parser.add_option('-f', '--file', help='a csv w/ x and y coordinates', default=None, dest='f')
     parser.add_option('-t', '--title', help='title for the chart', default="", dest='t')
+    parser.add_option('-X', '--xtitle', help='x-axis title', default="", dest='xtitle')
+    parser.add_option('-Y', '--ytitle', help='y-ayis title', default="", dest='ytitle')
     parser.add_option('-x', help='x coordinates', default=None, dest='x')
     parser.add_option('-y', help='y coordinates', default=None, dest='y')
     parser.add_option('-s', '--size', help='y coordinates', default=20, dest='size', type='int')
@@ -104,7 +124,7 @@ def main():
         opts.f = sys.stdin.readlines()
 
     if opts.f or (opts.x and opts.y):
-        plot_scatter(opts.f, opts.x, opts.y, opts.size, opts.pch, opts.colour, opts.t)
+        plot_scatter(opts.f, opts.x, opts.y, opts.size, opts.pch, opts.colour, opts.t, opts.xtitle, opts.ytitle)
     else:
         print("nothing to plot!")
 
